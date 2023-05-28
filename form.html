@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller's Admin Page</title>
+</head>
+<body>
+    <h1>Seller's Admin Page</h1>
+    <form method="POST" action="/submit-form" id="myForm">
+        <label for="name">Product Name:</label>
+        <input type="text" id="name" name="name"><br>
+
+        <label for="price">Selling Price:</label>
+        <input type="number" id="price" name="price"><br>
+
+        <input type="submit" value="Add Product">
+
+    </form>
+    <div id="products"></div>
+    <div id="totalPrice">Total Price: 0</div>
+    <script>
+        let totalPrice = 0;
+
+        function updateTotalPrice(price) {
+            totalPrice = parseFloat(totalPrice) + parseFloat(price);
+            const totalPriceElement = document.getElementById('totalPrice');
+            totalPriceElement.textContent = `Total Price: ${totalPrice}`;
+        }
+        window.onload = function()
+        { 
+            fetch('/products')
+                .then(response => response.json())
+                .then(data =>{
+                    const formData = document.getElementById('products');
+                    formData.innerHTML='';
+                    data.forEach(data => {
+                        const li = document.createElement('li');
+                        li.textContent = `${data.name} - ${data.price}`;
+                        formData.appendChild(li);
+
+                        const delbtn = document.createElement('input')
+                        delbtn.type = "button"
+                        delbtn.value = "delete"
+                        delbtn.onclick = () => {
+                            deleteProduct(data.id,data.price)
+                        }
+                        
+                        function deleteProduct(id,price){
+                            console.log("delete product with this id", id);
+                            fetch('/Product/delete-product/'+id,{
+                                method: 'DELETE'
+                            })
+                            .then(response=>response.json())
+                            .then(data=>{
+                                console.log(data.message);
+                                const formData = document.getElementById('products');
+                                const deletedProduct = formData.querySelector(`li[${id}]`);
+                                deletedProduct.remove();
+                                updateTotalPrice(-price);
+                            })
+                            .catch(err=>{
+                                console.log(err.message); 
+                            });
+                        }
+
+                        
+
+                        li.appendChild(delbtn)
+                        formData.appendChild(li)
+                        updateTotalPrice(data.price);
+                    });
+                })
+                .catch(err=>{
+                    console.log(err);
+                })
+        }
+    </script>
+</body>
+</html>
